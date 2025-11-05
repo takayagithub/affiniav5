@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affinia｜AIタイプ診断</title>
+
+  <!-- OG/Twitter（テンプレ。後で置換） -->
+  <meta property="og:title" content="Affinia｜AIタイプ診断">
+  <meta property="og:description" content="性格にとらわれず、いまの自分を知る。短い質問で16タイプから近いキャラを表示。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://example.com/">
+  <meta property="og:image" content="https://example.com/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- フォント（軽い） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg-grad:linear-gradient(180deg,#fff5fc 0%, #ffe9f3 55%, #fff5fc 100%);
+      --surface:#fff; --ink:#2c2c2c; --sub:#666; --muted:#9aa;
+      --primary:#e97da0; --primary-d:#d5658a; --secondary:#8126d2;
+      --border:#f0ddea; --ring:rgba(233,125,160,.35);
+      --radius:18px; --shadow:0 12px 34px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:'Noto Sans JP',system-ui,-apple-system,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;
+      background:var(--bg-grad); color:var(--ink); line-height:1.75; font-size:16px;
+    }
+    .container{max-width:100%; padding:0 22px; margin:0 auto}
+    @media (min-width:560px){ .container{max-width:700px; padding:0 24px} }
+    @media (min-width:960px){ .container{max-width:980px; padding:0 26px} }
+
+    /* Header */
+    .site-header{position:sticky; top:0; z-index:1200; background:rgba(255,255,255,.92);
+      backdrop-filter:saturate(1.1) blur(8px); border-bottom:1px solid var(--border)}
+    .header-inner{display:flex; align-items:center; gap:10px; padding:14px 0}
+    .logo{font-weight:800; font-size:clamp(18px,3.2vw,22px); color:var(--secondary); text-decoration:none; margin-right:auto}
+    .nav-toggle{margin-left:8px; font-size:22px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:#fff}
+    .site-header .container{padding:0 26px}
+
+    /* Drawer */
+    .nav{display:none}
+    @media (min-width:920px){ .nav{display:flex; gap:10px} .nav-toggle{display:none} }
+    @media (max-width:919.98px){
+      .nav{position:fixed; right:0; top:0; width:min(86vw,420px); height:100vh; background:#fff;
+        border-left:1px solid var(--border); padding:22px; display:flex; flex-direction:column; gap:10px;
+        transform:translateX(100%); transition:transform .18s ease; z-index:1100}
+      .nav.open{transform:translateX(0)}
+      .nav a{display:flex; align-items:center; gap:10px; padding:14px 12px; border-radius:12px; text-decoration:none; color:#444}
+      .nav a + a{border-top:1px dashed #eee}
+      .nav a:hover{background:#f8f1f7}
+      .nav .sub{font-size:12px; color:#777; display:block; margin-left:2.2em; margin-top:-6px}
+      .nav .nav-close{position:absolute; top:10px; right:10px; width:36px; height:36px; border-radius:10px; border:1px solid var(--border);
+        background:#fff; color:#444; font-size:22px; line-height:34px; text-align:center; cursor:pointer; z-index:1201}
+    }
+    .scrim{position:fixed; inset:0; background:rgba(255,245,252,.88); backdrop-filter:blur(2px);
+      opacity:0; pointer-events:none; transition:opacity .15s ease; z-index:1050}
+    .scrim.show{opacity:1; pointer-events:auto}
+
+    /* Hero */
+    .hero{padding:28px; border-radius:var(--radius); background:#fff; box-shadow:var(--shadow); border:1px solid var(--border); margin:18px 0 24px}
+    .kicker{display:inline-block; color:var(--secondary); font-weight:700; letter-spacing:.08em; margin-bottom:6px}
+    h1{font-size:clamp(24px,7vw,40px); line-height:1.25; margin:.2em 0 .4em}
+    .hero p{color:var(--sub); margin:0 0 14px}
+
+    /* Buttons & chips */
+    .actions{display:flex; gap:12px; flex-wrap:wrap}
+    .btn{display:inline-flex; align-items:center; gap:8px; justify-content:center; cursor:pointer;
+      padding:12px 18px; border-radius:999px; text-decoration:none; border:1px solid transparent; transition:.15s; font-weight:600; box-shadow:var(--shadow)}
+    .btn.primary{background:var(--primary); color:#fff}
+    .btn.primary:hover{background:var(--primary-d)}
+    .btn.ghost{background:#fff; border-color:#ead8e6; color:#444}
+    .btn.ghost:hover{border-color:#e9cfe0}
+    .chips{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .chip{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-size:14px; background:#fff; border:1px solid var(--border); color:#555}
+
+    /* Feature cards */
+    .grid{display:grid; gap:14px}
+    @media (min-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    .card{background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+
+    /* Footer */
+    .site-footer{margin-top:14px}
+    .footer-inner{display:flex; flex-direction:column; gap:10px; align-items:flex-start; padding:20px 0}
+    .footer-inner .links{display:flex; gap:12px; flex-wrap:wrap; justify-content:center}
+    .footer-inner a{color:#9aa; text-decoration:none}
+    .footer-inner a:hover{color:#677}
+    .copy{color:#888}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo">Affinia</a>
+      <button class="nav-toggle" id="navToggle" aria-label="メニュー" aria-expanded="false" type="button">☰</button>
+      <nav class="nav" id="nav" aria-label="グローバルナビゲーション">
+        <button class="nav-close" type="button" aria-label="閉じる">×</button>
+        <a href="quiz.html">🧭 診断 <span class="sub">今のあなたをチェック</span></a>
+        <a href="types.html">🗂 タイプ一覧 <span class="sub">16タイプを比べる</span></a>
+        <a href="relation.html">💞 タイプ相性 <span class="sub">相性のヒント</span></a>
+        <a href="affinia.html">ℹ️ Affiniaとは <span class="sub">サービスについて</span></a>
+      </nav>
+    </div>
+  </header>
+  <div class="scrim" aria-hidden="true"></div>
+
+  <main class="container">
+    <section class="hero">
+      <span class="kicker">AIタイプ診断</span>
+      <h1>性格にとらわれず、<br>自分らしい今を。</h1>
+      <p>8問に答えるだけで、Affiniaの16タイプから近いキャラをご案内します。</p>
+      <div class="actions">
+        <a class="btn primary" href="quiz.html">AIタイプ診断をはじめる</a>
+        <a class="btn ghost" href="affinia.html">Affiniaとは</a>
+      </div>
+      <div class="chips">
+        <span class="chip">⏱ 約1分で完了</span>
+        <span class="chip">📝 質問は5段階</span>
+        <span class="chip">💡 相性のヒントつき</span>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>16タイプ</h2>
+        <p>固定ラベルじゃなく「いまの自分」の鏡。</p>
+      </div>
+      <div class="card">
+        <h2>タイプ相性</h2>
+        <p>タイプ同士の接し方&近づくコツを表示。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="brand">Affinia</div>
+      <div class="links">
+        <a href="affinia.html">Affiniaとは</a>
+        <a href="types.html">タイプ一覧</a>
+        <a href="relation.html">タイプ相性</a>
+        <a href="#">利用規約(準備中)</a>
+        <a href="#">プライバシー(準備中)</a>
+      </div>
+      <div class="copy">© <span id="y"></span> Affinia</div>
+    </div>
+  </footer>
+
+  <script>
+    // 年度
+    document.addEventListener('DOMContentLoaded', ()=> {
+      const y = document.getElementById('y'); if(y) y.textContent = new Date().getFullYear();
+    });
+
+    // ドロワー
+    (function(){
+      const t = document.getElementById('navToggle');
+      const n = document.getElementById('nav');
+      const s = document.querySelector('.scrim');
+
+      if(!t || !n || !s) return;
+      const open = ()=>{ n.classList.add('open'); s.classList.add('show'); t.setAttribute('aria-expanded','true'); };
+      const close= ()=>{ n.classList.remove('open'); s.classList.remove('show'); t.setAttribute('aria-expanded','false'); };
+      t.addEventListener('click', ()=> n.classList.contains('open') ? close() : open());
+      n.querySelector('.nav-close')?.addEventListener('click', close);
+      s.addEventListener('click', close);
+      document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+      n.querySelectorAll('a').forEach(a=> a.addEventListener('click', close));
+    })();
+  </script>
+</body>
+</html>
