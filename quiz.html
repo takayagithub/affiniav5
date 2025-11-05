@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIタイプ診断｜Affinia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-grad:linear-gradient(180deg,#fff5fc 0%, #ffe9f3 55%, #fff5fc 100%);
+  --surface:#fff; --ink:#2c2c2c; --sub:#666;
+  --primary:#e97da0; --secondary:#8126d2;
+  --border:#f0ddea; --radius:20px; --shadow:0 8px 24px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Noto Sans JP',system-ui,-apple-system,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;
+  background:var(--bg-grad);color:var(--ink);line-height:1.7}
+.container{max-width:640px;margin:auto;padding:20px}
+h1,h2{margin:.4em 0;font-weight:800;text-align:center}
+button{font-family:inherit}
+
+/* Card */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:28px;margin:20px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68vh;transition:.3s}
+.progress{height:6px;border-radius:999px;background:#ffe4f0;overflow:hidden;width:100%;margin-bottom:22px}
+.progress>.bar{height:100%;width:0;background:linear-gradient(90deg,#e97da0,#8126d2);transition:width .25s ease}
+
+/* 5-step horizontal */
+.h5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:28px 0;width:100%}
+.dot{height:26px;border-radius:999px;background:#f2d6e3;cursor:pointer;transition:.15s}
+.dot.selected{background:#e97da0;box-shadow:0 0 0 6px rgba(233,125,160,.18)}
+.labels{display:flex;justify-content:space-between;width:100%;font-size:14px;color:var(--sub);}
+
+/* Buttons */
+.btns{display:flex;gap:12px;margin-top:20px}
+.btn{flex:1;display:inline-flex;align-items:center;justify-content:center;padding:12px 0;border-radius:999px;font-weight:600;border:none;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.ghost{background:#fff;border:1px solid var(--border);color:#444}
+.btn.primary:hover{background:#d5658a}
+
+/* Fade slide */
+.slide{position:relative;overflow:hidden;width:100%}
+.qview{opacity:0;transform:translateX(8%);transition:opacity .25s,transform .25s}
+.qview.show{opacity:1;transform:translateX(0)}
+
+.result{padding:20px;text-align:center}
+.result h2{color:var(--secondary);margin-bottom:.2em}
+.result p{color:var(--sub)}
+</style>
+</head>
+<body>
+
+<main class="container">
+  <section class="card" id="quiz">
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="slide" id="slide"></div>
+  </section>
+</main>
+
+<script>
+const Q = [
+  {axis:'X',title:'朝のはじまり',left:'ゆっくり整える',right:'すぐ動く'},
+  {axis:'X',title:'計画が崩れたら',left:'静かに立て直す',right:'勢いで切替'},
+  {axis:'X',title:'チャンスの誘い',left:'様子を見る',right:'まず挑戦'},
+  {axis:'Y',title:'会話のテンポ',left:'短めが楽',right:'話すと元気'},
+  {axis:'Y',title:'決め方',left:'気持ち優先',right:'筋道優先'},
+  {axis:'Y',title:'助け方',left:'そっと寄りそう',right:'具体的に動く'},
+  {axis:'Y',title:'夜の過ごし方',left:'静かに回復',right:'誰かと発散'}
+];
+
+const TYPES=[
+  {code:"A1",name:"情熱ヒーロー",desc:"勢いとまっすぐさで周囲を引っ張る。"},
+  {code:"A2",name:"クールブレイン",desc:"静かに考え、無駄を減らして動く。"},
+  {code:"B1",name:"おちゃめキツネ",desc:"ひらめきと遊び心で場を明るくする。"},
+  {code:"B2",name:"博識フクロウ",desc:"深く考え、洞察力で導く。"},
+  {code:"C1",name:"頑張りミツバチ",desc:"コツコツ積み重ねる誠実タイプ。"},
+  {code:"C2",name:"もじもじヒツジ",desc:"静かに支える安心タイプ。"},
+  {code:"D1",name:"マイペースナマケモノ",desc:"自分のペースで確実に進む。"},
+  {code:"D2",name:"健気ワンコ",desc:"人のために動く優しい存在。"}
+];
+
+const bar=document.getElementById("bar");
+const slide=document.getElementById("slide");
+let idx=0;const ans=Array(Q.length).fill(3);
+
+function render(){
+  bar.style.width=(idx/Q.length*100)+"%";
+  slide.innerHTML="";
+  const v=document.createElement("div");v.className="qview show";
+  const q=Q[idx];
+  v.innerHTML=`<h2>Q${idx+1}/${Q.length}：${q.title}</h2>
+  <div class="h5">${[1,2,3,4,5].map(i=>`<div class="dot${ans[idx]==i?" selected":""}" data-v="${i}"></div>`).join("")}</div>
+  <div class="labels"><span>${q.left}</span><span>${q.right}</span></div>`;
+  slide.appendChild(v);
+  v.querySelectorAll(".dot").forEach(d=>d.onclick=()=>{
+    ans[idx]=+d.dataset.v;
+    if(idx<Q.length-1){idx++;render();}else{finish();}
+  });
+}
+
+function finish(){
+  bar.style.width="100%";
+  const norm=ans.map(v=>(v-1)/4);
+  let x=0,y=0,xc=0,yc=0;
+  Q.forEach((q,i)=>{
+    if(q.axis==="X"){x+=norm[i];xc++;}else{y+=norm[i];yc++;}
+  });
+  const X=x/xc,Y=y/yc;
+  const lv=v=>v<.25?1:v<.5?2:v<.75?3:4;
+  const code='ABCD'[lv(X)-1]+lv(Y);
+  const t=TYPES[Math.floor(Math.random()*TYPES.length)];
+  slide.innerHTML=`<div class="result"><h2>${t.name}</h2><p>${t.desc}</p>
+  <p>あなたの傾向: X=${X.toFixed(2)}, Y=${Y.toFixed(2)}</p>
+  <a class="btn primary" href="index.html">TOPに戻る</a></div>`;
+}
+
+render();
+</script>
+</body>
+</html>
