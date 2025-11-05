@@ -1,70 +1,70 @@
 
-/* v5.6: 7-point Likert, auto-advance, single page */
+/* v5.7 inline quiz on index */
 (function(){
   'use strict';
-  const $ = sel => document.querySelector(sel);
-  const el = (tag, cls) => { const n=document.createElement(tag); if(cls) n.className=cls; return n; };
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const el = (t,c)=>{const n=document.createElement(t); if(c) n.className=c; return n;};
 
   document.addEventListener('DOMContentLoaded', ()=>{
-    const nav = $('#nav');
-    if(nav && !nav.dataset.enhanced){
-      nav.dataset.enhanced='1';
-      nav.querySelectorAll('a').forEach(a=>{
-        if(!a.querySelector('.ic')){
-          const i = el('span','ic');
-          i.textContent = (a.textContent.includes('診断')?'🧭': a.textContent.includes('タイプ一覧')?'🗂': a.textContent.includes('相性')?'💞':'ℹ️');
-          a.prepend(i);
-        }
-      });
+    const mountPoint = document.getElementById('instant-quiz');
+    if(!mountPoint) return;
+
+    const Q = [
+      {axis:'X', title:'朝のはじまり', left:'そう思う', right:'そう思わない', bl:'ゆっくり整える', br:'すぐ動く'},
+      {axis:'X', title:'計画が崩れたら勢いで切り替える', left:'そう思う', right:'そう思わない', bl:'静かに立て直す', br:'勢いで切替'},
+      {axis:'X', title:'誘いがあればまず挑戦する', left:'そう思う', right:'そう思わない', bl:'様子を見る', br:'まず挑戦'},
+      {axis:'Y', title:'話すほど元気が出るほうだ', left:'そう思う', right:'そう思わない', bl:'短めが楽', br:'話すと元気'},
+      {axis:'Y', title:'判断は筋道を重視するほうだ', left:'そう思う', right:'そう思わない', bl:'気持ち優先', br:'筋道優先'},
+      {axis:'Y', title:'困っている人には具体的に動いて助ける', left:'そう思う', right:'そう思わない', bl:'そっと寄りそう', br:'具体的に動く'},
+      {axis:'Y', title:'夜は誰かと発散するほうが回復しやすい', left:'そう思う', right:'そう思わない', bl:'静かに回復', br:'誰かと発散'}
+    ];
+
+    const sec = el('section','iq-sec container');
+    const heroStick = el('div','iq-stick');
+    heroStick.innerHTML = '<div class="iq-progress"><div class="bar" id="iqBar"></div></div><div style="font-size:13px;color:#666">タップで進みます（全'+Q.length+'問）</div>';
+    sec.appendChild(heroStick);
+
+    const card = el('div','iq-card');
+    sec.appendChild(card);
+    mountPoint.replaceWith(sec);
+
+    const ans = Array(Q.length).fill(0);
+    function progress(){
+      const done = ans.filter(v=>v>0).length;
+      const bar = $('#iqBar'); if(bar) bar.style.width = Math.round(done/Q.length*100)+'%';
     }
-  });
-
-  const Q = [
-    {axis:'X', title:'朝のはじまり', left:'そう思う', right:'そう思わない', bl:'ゆっくり整える', br:'すぐ動く'},
-    {axis:'X', title:'計画が崩れたら勢いで切り替える', left:'そう思う', right:'そう思わない', bl:'静かに立て直す', br:'勢いで切替'},
-    {axis:'X', title:'誘いがあればまず挑戦する', left:'そう思う', right:'そう思わない', bl:'様子を見る', br:'まず挑戦'},
-    {axis:'Y', title:'話すほど元気が出るほうだ', left:'そう思う', right:'そう思わない', bl:'短めが楽', br:'話すと元気'},
-    {axis:'Y', title:'判断は筋道を重視するほうだ', left:'そう思う', right:'そう思わない', bl:'気持ち優先', br:'筋道優先'},
-    {axis:'Y', title:'困っている人には具体的に動いて助ける', left:'そう思う', right:'そう思わない', bl:'そっと寄りそう', br:'具体的に動く'},
-    {axis:'Y', title:'夜は誰かと発散するほうが回復しやすい', left:'そう思う', right:'そう思わない', bl:'静かに回復', br:'誰かと発散'}
-  ];
-
-  function mountQuiz(){
-    const box = document.getElementById('quiz');
-    const bar = document.getElementById('bar');
-    if(!box || !bar) return;
-    box.classList.add('slide');
-    const view = el('div','qview show');
-    const old = document.getElementById('qwrap'); if(old) box.replaceChild(view, old); else box.insertBefore(view, box.children[1]);
-
-    let idx=0;
-    const ans = Array(Q.length).fill(4); // center default (1..7)
 
     function render(){
-      const q=Q[idx];
-      bar.style.width = Math.round((idx/Q.length)*100)+'%';
-      view.classList.remove('show');
-      setTimeout(()=>{
-        view.innerHTML='';
-        const h2 = el('h2','q-title'); h2.textContent=`Q${idx+1} / ${Q.length}：${q.title}`; view.appendChild(h2);
-
-        const likert = el('div','likert');
+      card.innerHTML='';
+      Q.forEach((q,i)=>{
+        const wrap = el('div','iq-q'); wrap.id='q'+i;
+        const h = el('h3','iq-title'); h.textContent = `Q${i+1}：${q.title}`; wrap.appendChild(h);
         const row = el('div','lk-row');
-        for(let i=1;i<=7;i++){
-          const b = el('button','lk'); b.type='button'; b.dataset.i=String(i);
-          const cls = i<=3 ? 'agree' : (i===4 ? 'neu' : 'dis');
-          b.classList.add(cls);
-          if(ans[idx]===i) b.classList.add('sel');
-          b.onclick=()=>{ ans[idx]=i; if(idx<Q.length-1){ idx++; render(); } else { finish(); } };
+        for(let j=1;j<=7;j++){
+          const b = el('button','lk'); b.type='button'; b.dataset.i=j;
+          const cls = j<=3?'agree': j===4?'neu':'dis'; b.classList.add(cls);
+          if(ans[i]===j) b.classList.add('sel');
+          b.onclick = ()=>{
+            ans[i]=j; wrap.classList.add('answered');
+            $$('#q'+i+' .lk').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+            progress();
+            const nextIndex = ans.findIndex((v,idx)=>v===0 && idx>i);
+            if(nextIndex!=-1){
+              const target = document.getElementById('q'+nextIndex);
+              target && target.scrollIntoView({behavior:'smooth', block:'center'});
+            } else if(ans.every(v=>v>0)){
+              finish();
+            }
+          };
           row.appendChild(b);
         }
-        likert.appendChild(row);
-        const labs = el('div','lk-labels'); labs.innerHTML = `<span>${q.left}</span><span>${q.right}</span>`;
-        likert.appendChild(labs);
-        view.appendChild(likert);
-
-        view.classList.add('show');
-      }, 10);
+        wrap.appendChild(row);
+        const labs = el('div','iq-labels'); labs.innerHTML = `<span>${q.left}</span><span>${q.right}</span>`;
+        wrap.appendChild(labs);
+        card.appendChild(wrap);
+      });
+      progress();
     }
 
     function finish(){
@@ -81,13 +81,6 @@
       location.href='result.html?t='+encodeURIComponent(code);
     }
 
-    const prev = document.getElementById('prevBtn');
-    const next = document.getElementById('nextBtn');
-    if(prev){ prev.onclick=()=>{ if(idx>0){ idx--; render(); } }; }
-    if(next){ next.onclick=()=>{ if(idx<Q.length-1){ idx++; render(); } else { finish(); } }; }
-
     render();
-  }
-
-  document.addEventListener('DOMContentLoaded', ()=>{ try{ mountQuiz(); }catch(e){ console.error(e); } });
+  });
 })();

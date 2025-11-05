@@ -1,9 +1,16 @@
 
-/* v5.6 Likert 7-point inspired UI */
-.likert{margin:10px 0 6px}
-.lk-row{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;align-items:center}
+/* v5.7 additions: inline quiz on index */
+.iq-sec{margin:8px 0 20px}
+.iq-card{background:#fff;border:1px solid #f0ddea;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:16px}
+.iq-q{padding:16px 12px;border:1px solid #f1e3ee;border-radius:16px;margin:12px 0;background:#fff5fb1a}
+.iq-q.answered{opacity:.92}
+.iq-title{font-weight:800;margin:0 0 10px;font-size:clamp(18px,4.6vw,22px)}
+.iq-progress{height:6px;border-radius:99px;background:#ffe4f0;overflow:hidden;margin:0 0 10px}
+.iq-progress .bar{height:100%;background:linear-gradient(90deg,#e97da0,#8126d2);width:0}
+.iq-labels{display:flex;justify-content:space-between;margin-top:6px;color:#666;font-size:13px}
+.lk-row{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
 .lk{width:100%;aspect-ratio:1/1;border-radius:999px;border:2px solid #e6e1ef;background:#fff;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;transition:transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s}
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s}
 .lk[data-i="1"],.lk[data-i="7"]{transform:scale(1.0)}
 .lk[data-i="2"],.lk[data-i="6"]{transform:scale(0.94)}
 .lk[data-i="3"],.lk[data-i="5"]{transform:scale(0.88)}
@@ -13,8 +20,5 @@
 .lk.neu.sel{background:#b9bcc6;border-color:#aeb1bb;box-shadow:0 0 0 8px rgba(185,188,198,.16)}
 .lk.dis{border-color:#d8c7f3}
 .lk.dis.sel{background:#7a53d6;border-color:#7a53d6;box-shadow:0 0 0 8px rgba(122,83,214,.18)}
-.lk:active{transform:scale(0.96)}
-.lk-labels{display:flex;justify-content:space-between;margin-top:6px;color:#666;font-size:13px}
-.slide{position:relative;overflow:hidden}
-.slide .qview{opacity:0; transform:translateY(8%); transition:opacity .18s ease, transform .18s ease}
-.slide .qview.show{opacity:1; transform:translateY(0)}
+.iq-stick{position:sticky;top:66px;z-index:10;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);border:1px solid #f0ddea;border-radius:14px;padding:10px 12px;margin:12px 0}
+@media(min-width:960px){.iq-sec{margin-top:0}}
